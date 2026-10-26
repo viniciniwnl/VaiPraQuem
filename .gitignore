@@ -1,6 +1,6 @@
 # Default ignored files
 /shelf/
-/workspace.xml
+/.idea/workspace.xml
 # Editor-based HTTP Client requests
 /httpRequests/
 # Ignored default folder with query files
@@ -8,3 +8,13 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+Plaintext
+# Configurações do IntelliJ
+.idea/
+*.iml
+
+# Configurações do NetBeans (caso ele queira ignorar as dele também no futuro)
+nbproject/
+build/
+dist/

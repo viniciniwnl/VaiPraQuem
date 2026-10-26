@@ -11,7 +11,7 @@ public class ConnectionFactory {
         try {
             var conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/vaipraquem?zeroDateTimeBehavior=CONVERT_TO_NULL&useTimezone=true&serverTimezone=UTC",
                     "root",
-                    "!!!"); //No lugar da Interrogação coloque a senha configurada da conexão do banco MySQL
+                    "!"); //No lugar da Interrogação coloque a senha configurada da conexão do banco MySQL
             return conn;
 
         } catch (SQLException erro) {

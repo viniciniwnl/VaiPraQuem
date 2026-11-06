@@ -45,6 +45,10 @@ public class AnuncioService {
         return anuncioDao.excluir(idAnuncio, idVendedor);
     }
 
+    public ArrayList<Anuncio> listarDisponiveis() {
+        return anuncioDao.listarDisponiveis();
+    }
+
     public ArrayList<Anuncio> listarPorVendedor(Integer idVendedor) {
         if (idVendedor == null) {
             throw new IllegalArgumentException("Vendedor inválido.");

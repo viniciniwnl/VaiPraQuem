@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class Anuncio {
     private Integer idAnuncio;
     private Integer idVendedor;
+    private String nomeVendedor;
     private Integer idMaterial;
     private Integer idEndereco;
     private String titulo;
@@ -46,6 +47,14 @@ public class Anuncio {
 
     public void setIdVendedor(Integer idVendedor) {
         this.idVendedor = idVendedor;
+    }
+
+    public String getNomeVendedor() {
+        return nomeVendedor;
+    }
+
+    public void setNomeVendedor(String nomeVendedor) {
+        this.nomeVendedor = nomeVendedor;
     }
 
     public Integer getIdMaterial() {

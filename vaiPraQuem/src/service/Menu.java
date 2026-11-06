@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import model.Anuncio;
+import model.Compra;
+import model.Comprador;
 import model.Endereco;
 import model.Pessoa;
 import model.Vendedor;
@@ -16,6 +18,7 @@ public class Menu {
     private static final PessoaService pessoaService = new PessoaService();
     private static final EnderecoService enderecoService = new EnderecoService();
     private static final AnuncioService anuncioService = new AnuncioService();
+    private static final CompraService compraService = new CompraService();
     private static final MaterialService materialService = new MaterialService();
 
     public static void menuPrincipal() {
@@ -100,8 +103,115 @@ public class Menu {
         // A área de gerenciamento de anúncios é exclusiva do vendedor.
         if (pessoa instanceof Vendedor vendedor) {
             menuVendedor(vendedor);
-        } else {
-            System.out.println("Área do comprador: funcionalidades de compra serão implementadas posteriormente.");
+        } else if (pessoa instanceof Comprador comprador) {
+            menuComprador(comprador);
+        }
+    }
+
+    // ---------- área exclusiva do comprador ----------
+
+    private static void menuComprador(Comprador comprador) {
+        int opcao;
+        do {
+            System.out.println();
+            System.out.println("========== ÁREA DO COMPRADOR ==========");
+            System.out.println("Olá, " + comprador.getNome());
+            System.out.println("1 - Listar anúncios disponíveis");
+            System.out.println("2 - Realizar uma compra");
+            System.out.println("3 - Consultar histórico de compras");
+            System.out.println("4 - Gerenciar meus endereços");
+            System.out.println("0 - Sair da conta");
+            opcao = lerInteiro("Escolha: ");
+
+            try {
+                switch (opcao) {
+                    case 1 -> listarAnunciosDisponiveis();
+                    case 2 -> menuRealizarCompra(comprador);
+                    case 3 -> listarHistoricoCompras(comprador.getIdPessoa());
+                    case 4 -> menuGerenciarEnderecos(comprador.getIdPessoa());
+                    case 0 -> System.out.println("Você saiu da área do comprador.");
+                    default -> System.out.println("Opção inválida!");
+                }
+            } catch (RuntimeException erro) {
+                mostrarErro(erro);
+            }
+        } while (opcao != 0);
+    }
+
+    private static ArrayList<Anuncio> listarAnunciosDisponiveis() {
+        ArrayList<Anuncio> anuncios = anuncioService.listarDisponiveis();
+        if (anuncios.isEmpty()) {
+            System.out.println("Não existem anúncios disponíveis no momento.");
+            return anuncios;
+        }
+
+        System.out.println("========== ANÚNCIOS DISPONÍVEIS ==========");
+        for (Anuncio anuncio : anuncios) {
+            model.Material material = materialService.consultar(anuncio.getIdMaterial());
+            System.out.println("ID do anúncio: " + anuncio.getIdAnuncio());
+            System.out.println("Título: " + anuncio.getTitulo());
+            System.out.println("Descrição: " + anuncio.getDescricao());
+            System.out.println("Material: " + material.getNome());
+            if (material.getCategoria() != null) {
+                System.out.println("Categoria: " + material.getCategoria().getNome());
+            }
+            System.out.println("Estoque: " + anuncio.getQuantidade() + " " + anuncio.getUnidade());
+            System.out.println("Preço por unidade: R$ " + anuncio.getPreco());
+            System.out.println("Vendedor: " + anuncio.getNomeVendedor());
+            System.out.println("------------------------------------------");
+        }
+        return anuncios;
+    }
+
+    private static void menuRealizarCompra(Comprador comprador) {
+        ArrayList<Anuncio> anuncios = listarAnunciosDisponiveis();
+        if (anuncios.isEmpty()) return;
+
+        int idAnuncio = lerInteiro("Informe o ID do anúncio que deseja comprar: ");
+        Anuncio selecionado = null;
+        for (Anuncio anuncio : anuncios) {
+            if (anuncio.getIdAnuncio().equals(idAnuncio)) {
+                selecionado = anuncio;
+                break;
+            }
+        }
+
+        if (selecionado == null) {
+            System.out.println("ID inválido. Escolha um anúncio da lista exibida.");
+            return;
+        }
+
+        System.out.println("Anúncio selecionado: " + selecionado.getTitulo());
+        System.out.println("Vendedor: " + selecionado.getNomeVendedor());
+        System.out.println("Estoque disponível: " + selecionado.getQuantidade() + " " + selecionado.getUnidade());
+        double quantidade = lerDouble("Informe a quantidade que deseja comprar: ");
+
+        Compra compra = compraService.registrarCompra(
+                comprador.getIdPessoa(), idAnuncio, quantidade);
+
+        System.out.println("Compra realizada com sucesso!");
+        System.out.println("Código da compra: " + compra.getIdCompra());
+        System.out.println("Quantidade comprada: " + compra.getQuantidade() + " " + selecionado.getUnidade());
+        System.out.println("Valor total: R$ " + compra.getPreco());
+        System.out.println("Status: " + compra.getStatus());
+    }
+
+    private static void listarHistoricoCompras(Integer idComprador) {
+        ArrayList<Compra> compras = compraService.listarPorComprador(idComprador);
+        if (compras.isEmpty()) {
+            System.out.println("Você ainda não realizou nenhuma compra.");
+            return;
+        }
+
+        System.out.println("========== HISTÓRICO DE COMPRAS ==========");
+        for (Compra compra : compras) {
+            System.out.println("Código da compra: " + compra.getIdCompra());
+            System.out.println("ID do anúncio: " + compra.getIdAnuncio());
+            System.out.println("Quantidade: " + compra.getQuantidade());
+            System.out.println("Valor total: R$ " + compra.getPreco());
+            System.out.println("Data: " + compra.getDataCompra());
+            System.out.println("Status: " + compra.getStatus());
+            System.out.println("------------------------------------------");
         }
     }
 
@@ -117,6 +227,7 @@ public class Menu {
             System.out.println("2 - Listar meus anúncios");
             System.out.println("3 - Atualizar anúncio");
             System.out.println("4 - Excluir anúncio");
+            System.out.println("5 - Gerenciar meus endereços");
             System.out.println("0 - Sair da conta");
             opcao = lerInteiro("Escolha: ");
 
@@ -126,6 +237,7 @@ public class Menu {
                     case 2 -> listarMeusAnuncios(vendedor.getIdPessoa());
                     case 3 -> menuAtualizarAnuncio(vendedor);
                     case 4 -> menuExcluirAnuncio(vendedor);
+                    case 5 -> menuGerenciarEnderecos(vendedor.getIdPessoa());
                     case 0 -> System.out.println("Você saiu da área do vendedor.");
                     default -> System.out.println("Opção inválida!");
                 }
@@ -290,6 +402,59 @@ public class Menu {
         Endereco endereco = enderecoService.cadastrar(idPessoa, logradouro, numero,
                 complemento, bairro, cep, cidade, uf);
         System.out.println("Endereço cadastrado! ID: " + endereco.getIdEndereco());
+    }
+
+    private static void menuGerenciarEnderecos(Integer idPessoa) {
+        int opcao;
+        do {
+            ArrayList<Endereco> enderecos = enderecoService.listar(idPessoa);
+
+            System.out.println();
+            System.out.println("========== MEUS ENDEREÇOS ==========");
+            if (enderecos.isEmpty()) {
+                System.out.println("Você ainda não possui endereços cadastrados.");
+            } else {
+                for (Endereco endereco : enderecos) {
+                    System.out.println(descrever(endereco));
+                }
+            }
+
+            System.out.println("1 - Adicionar novo endereço");
+            System.out.println("2 - Excluir endereço");
+            System.out.println("0 - Voltar");
+            opcao = lerInteiro("Escolha: ");
+
+            switch (opcao) {
+                case 1 -> menuCadastrarEndereco(idPessoa);
+                case 2 -> menuExcluirEndereco(idPessoa, enderecos);
+                case 0 -> System.out.println("Voltando ao menu anterior...");
+                default -> System.out.println("Opção inválida!");
+            }
+        } while (opcao != 0);
+    }
+
+    private static void menuExcluirEndereco(Integer idPessoa, ArrayList<Endereco> enderecos) {
+        if (enderecos.isEmpty()) {
+            System.out.println("Não há endereços para excluir.");
+            return;
+        }
+
+        int idEndereco = lerInteiro("Informe o ID do endereço que deseja excluir: ");
+        if (!confirmar("Tem certeza de que deseja excluir o endereço " + idEndereco + "?")) {
+            System.out.println("Exclusão cancelada.");
+            return;
+        }
+
+        try {
+            boolean excluido = enderecoService.excluir(idPessoa, idEndereco);
+            if (excluido) {
+                System.out.println("Endereço excluído com sucesso!");
+            } else {
+                System.out.println("Nenhum endereço foi excluído.");
+            }
+        } catch (RuntimeException erro) {
+            System.out.println("Não foi possível excluir o endereço: " + erro.getMessage());
+        }
     }
 
     private static String descrever(Endereco endereco) {

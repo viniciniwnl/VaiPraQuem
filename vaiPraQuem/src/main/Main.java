@@ -1,5 +1,7 @@
 package main;
 
+import model.Compra;
+import service.CompraService;
 import service.Menu;
 
 public class Main {

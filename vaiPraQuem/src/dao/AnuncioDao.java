@@ -15,8 +15,8 @@ import java.util.ArrayList;
 public class AnuncioDao implements IAnuncioDao {
 
     private static final String COLUNAS =
-            "id_anuncio, id_vendedor, id_material, id_endereco, titulo, descricao, "
-                    + "quantidade, unidade, preco, status_anuncio, data_publicacao";
+            "a.id_anuncio, a.id_vendedor, a.id_material, a.id_endereco, a.titulo, a.descricao, "
+                    + "a.quantidade, a.unidade, a.preco, a.status_anuncio, a.data_publicacao, p.nome AS nome_vendedor";
 
     // status_anuncio e data_publicacao são omitidos para o banco aplicar seus valores padrão.
     private static final String SQL_CADASTRAR =
@@ -31,8 +31,16 @@ public class AnuncioDao implements IAnuncioDao {
     private static final String SQL_EXCLUIR =
             "DELETE FROM anuncio WHERE id_anuncio = ? AND id_vendedor = ?";
 
+    private static final String SQL_LISTAR_DISPONIVEIS =
+            "SELECT " + COLUNAS + " FROM anuncio a " +
+                    "INNER JOIN pessoa p ON p.id_pessoa = a.id_vendedor " +
+                    "WHERE a.status_anuncio = 'DISPONIVEL' AND a.quantidade > 0 " +
+                    "ORDER BY a.data_publicacao DESC";
+
     private static final String SQL_LISTAR_VENDEDOR =
-            "SELECT " + COLUNAS + " FROM anuncio WHERE id_vendedor = ? ORDER BY data_publicacao DESC";
+            "SELECT " + COLUNAS + " FROM anuncio a " +
+                    "INNER JOIN pessoa p ON p.id_pessoa = a.id_vendedor " +
+                    "WHERE a.id_vendedor = ? ORDER BY a.data_publicacao DESC";
 
     @Override
     public Anuncio cadastrar(Anuncio anuncio) {
@@ -109,6 +117,24 @@ public class AnuncioDao implements IAnuncioDao {
     }
 
     @Override
+    public ArrayList<Anuncio> listarDisponiveis() {
+        ArrayList<Anuncio> anuncios = new ArrayList<>();
+
+        try (Connection conexao = ConnectionFactory.getConnection();
+             PreparedStatement ps = conexao.prepareStatement(SQL_LISTAR_DISPONIVEIS);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                anuncios.add(mapear(rs));
+            }
+            return anuncios;
+
+        } catch (SQLException erro) {
+            throw new RuntimeException("Erro ao listar anúncios disponíveis.", erro);
+        }
+    }
+
+    @Override
     public ArrayList<Anuncio> listarPorVendedor(Integer idVendedor) {
         ArrayList<Anuncio> anuncios = new ArrayList<>();
 
@@ -132,6 +158,7 @@ public class AnuncioDao implements IAnuncioDao {
         Anuncio anuncio = new Anuncio();
         anuncio.setIdAnuncio(rs.getInt("id_anuncio"));
         anuncio.setIdVendedor(rs.getInt("id_vendedor"));
+        anuncio.setNomeVendedor(rs.getString("nome_vendedor"));
         anuncio.setIdMaterial(rs.getInt("id_material"));
         anuncio.setIdEndereco(rs.getInt("id_endereco"));
         anuncio.setTitulo(rs.getString("titulo"));
